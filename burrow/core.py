@@ -26,7 +26,7 @@ class App(object):
                     continue
                 match = re.match(route, request['PATH_INFO'])
                 if match is not None:
-                    content = callback(request, response, *match.groups())
+                    content = self._handle_callback(callback, request, response, *match.groups())
                     break
             else:
                 raise HTTPError(404)
@@ -37,18 +37,30 @@ class App(object):
             elif type(e) is HTTPError:
                 status, content = self._handle_error(request, response, e)
             else:
+                print(e)
                 err = HTTPError(message=str(e))
                 status, content = self._handle_error(request, response, err)
 
         start_response(status, headers)
         return content
 
+    def _handle_callback(self, callback, request, response, *args):
+        wants = []
+        for i in callback.wants:
+            if i == 'response':
+                wants.append(response)
+            if i == 'request':
+                wants.append(request)
+        wants.extend(args)
+        return callback(*wants)
+
     def _handle_error(self, request, response, e):
         status = '{0} {1}'.format(e.code, httplib.responses[e.code])
         callback = self._errors.get(e.code)
         try:
-            return status, callback(request, response, e.message)
-        except Exception:
+            return status, self._handle_callback(callback, request, response, e.message)
+        except Exception as e:
+            print(e)
             return status, status
 
     def _handle_redirect(self, response, e):
@@ -56,18 +68,26 @@ class App(object):
         response['Location'] = e.destination
         return status, ''
 
-    def route(self, path, method='GET'):
+    def route(self, path, method='GET', wants=()):
         path = '^{0}$'.format(path)
-        def wrapper(func):
-            self._routes.append(Route(path, method, func))
-            return func
-        return wrapper
+        class Wrapper(object):
+            def __init__(self2, func):
+                self._routes.append(Route(path, method, self2))
+                self2.wants = wants
+                self2._func = func
+            def __call__(self2, *args):
+                return self2._func(*args)
+        return Wrapper
 
-    def error(self, code):
-        def wrapper(func):
-            self._errors[code] = func
-            return func
-        return wrapper
+    def error(self, code, wants=()):
+        class Wrapper(object):
+            def __init__(self2, func):
+                self._errors[code] = self2
+                self2.wants = wants
+                self2._func = func
+            def __call__(self2, *args):
+                return self2._func(*args)
+        return Wrapper
 
     def run(self, host='localhost', port=3030, server=ThreadingWSGIServer):
         port = int(port)
