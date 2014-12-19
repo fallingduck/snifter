@@ -2,6 +2,7 @@ import wsgiref.headers
 import collections
 import re
 import cgi
+import inspect
 import httplib
 
 from .server import ThreadingWSGIServer, make_server
@@ -11,8 +12,16 @@ from .error import HTTPError, Redirect
 Route = collections.namedtuple('Route', ('path', 'method', 'callback'))
 
 
-class Request(wsgiref.headers.Headers):
+def _parse_return(content):
+    if isinstance(content, unicode):
+        content = content.encode('utf-8')
+    if isinstance(content, str):
+        return (content,)
+    elif isinstance(content, collections.Iterable):
+        return (i.encode('utf-8') for i in content)
 
+
+class Request(wsgiref.headers.Headers):
     def __init__(self, request, headers):
         wsgiref.headers.Headers.__init__(self, headers)
         self.forms = cgi.FieldStorage(fp=request['wsgi.input'], environ=request)
@@ -50,7 +59,7 @@ class App(object):
                 status, content = self._handle_error(request, response, err)
 
         start_response(status, headers)
-        return content
+        return _parse_return(content)
 
     def _handle_callback(self, callback, request, response, *args):
         wants = []
