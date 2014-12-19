@@ -6,7 +6,7 @@ app = burrow.App()
 
 @app.route('/')
 def home():
-    return u'Hello, world!'
+    return 'Hello, world!'
 
 
 @app.route('/redirect')
@@ -28,7 +28,7 @@ def whoami(response, request):
 
 @app.route('/generator')
 def generator():
-    yield u'a'
+    yield 'a'
     yield 'b'
     yield 'c'
 

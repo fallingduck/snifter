@@ -3,7 +3,6 @@ Yet another Python web microframework. This one boasts simplicity, minimalism, t
 A little to-do list for myself:
 
 - Cookies (request, response)
-- Content parser (iterables, generators?)
 - Static files (304, etc)
 - Websockets
 - Sessions

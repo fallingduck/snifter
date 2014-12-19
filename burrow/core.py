@@ -1,9 +1,17 @@
+from __future__ import print_function
+
+import sys
+py3 = sys.version_info >= (3,0)
+
 import wsgiref.headers
 import collections
 import re
 import cgi
-import inspect
-import httplib
+
+if py3:
+    import http.client as httplib
+else:
+    import httplib
 
 from .server import ThreadingWSGIServer, make_server
 from .error import HTTPError, Redirect
@@ -12,13 +20,22 @@ from .error import HTTPError, Redirect
 Route = collections.namedtuple('Route', ('path', 'method', 'callback'))
 
 
-def _parse_return(content):
-    if isinstance(content, unicode):
-        content = content.encode('utf-8')
-    if isinstance(content, str):
-        return (content,)
-    elif isinstance(content, collections.Iterable):
-        return (i.encode('utf-8') for i in content)
+if py3:
+    def _parse_return(content):
+        if isinstance(content, str):
+            content = content.encode('utf-8')
+        if isinstance(content, bytes):
+            return (content,)
+        elif isinstance(content, collections.Iterable):
+            return (i.encode('utf-8') for i in content)
+else:
+    def _parse_return(content):
+        if isinstance(content, unicode):
+            content = content.encode('utf-8')
+        if isinstance(content, str):
+            return (content,)
+        elif isinstance(content, collections.Iterable):
+            return (i.encode('utf-8') for i in content)
 
 
 class Request(wsgiref.headers.Headers):
@@ -109,5 +126,5 @@ class App(object):
     def run(self, host='localhost', port=3030, server=ThreadingWSGIServer):
         port = int(port)
         server = make_server(host, port, self, server)
-        print 'Serving on http://{0}:{1}...'.format(host, port)
+        print('Serving on http://{0}:{1}...'.format(host, port))
         server.serve_forever()
