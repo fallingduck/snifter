@@ -1,6 +1,7 @@
 import wsgiref.headers
 import collections
 import re
+import cgi
 import httplib
 
 from .server import ThreadingWSGIServer, make_server
@@ -8,6 +9,13 @@ from .error import HTTPError, Redirect
 
 
 Route = collections.namedtuple('Route', ('path', 'method', 'callback'))
+
+
+class Request(wsgiref.headers.Headers):
+
+    def __init__(self, request, headers):
+        wsgiref.headers.Headers.__init__(self, headers)
+        self.forms = cgi.FieldStorage(fp=request['wsgi.input'], environ=request)
 
 
 class App(object):
@@ -18,7 +26,7 @@ class App(object):
 
     def __call__(self, request, start_response):
         headers = [('Content-type', 'text/html')]
-        response = wsgiref.headers.Headers(headers)
+        response = Request(request, headers)
         status = '200 OK'
         try:
             for route, method, callback in self._routes:
