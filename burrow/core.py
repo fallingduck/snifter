@@ -17,9 +17,6 @@ from .server import ThreadingWSGIServer, make_server
 from .error import HTTPError, Redirect
 
 
-Route = collections.namedtuple('Route', ('path', 'method', 'callback'))
-
-
 if py3:
     def _parse_return(content):
         if isinstance(content, str):
@@ -36,6 +33,11 @@ else:
             return (content,)
         elif isinstance(content, collections.Iterable):
             return (i.encode('utf-8') for i in content)
+
+
+
+
+Route = collections.namedtuple('Route', ('path', 'method', 'callback'))
 
 
 class Request(wsgiref.headers.Headers):
