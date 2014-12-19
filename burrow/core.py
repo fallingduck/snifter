@@ -1,31 +1,13 @@
-__author__ = 'Jack VanDrunen'
-__license__ = 'BSD New'
-__version__ = '0.0.1'
-
-
 import wsgiref.headers
 import collections
 import re
 import httplib
 
-from SocketServer import ThreadingMixIn
-from wsgiref.simple_server import WSGIServer, make_server
-class ThreadingWSGIServer(WSGIServer, ThreadingMixIn):
-    pass
+from .server import ThreadingWSGIServer, make_server
+from .error import HTTPError, Redirect
 
 
 Route = collections.namedtuple('Route', ('path', 'method', 'callback'))
-
-
-class HTTPError(Exception):
-    def __init__(self, code=500):
-        self.code = code
-
-
-class Redirect(HTTPError):
-    def __init__(self, destination, code=303):
-        self.destination = destination
-        self.code = code
 
 
 class App(object):
@@ -44,33 +26,34 @@ class App(object):
                     continue
                 match = re.match(route, request['PATH_INFO'])
                 if match is not None:
-                    content = callback(request, response, **match.groupdict())
+                    content = callback(request, response, *match.groups())
                     break
             else:
                 raise HTTPError(404)
 
         except Exception as e:
             if type(e) is Redirect:
-                status, content = self._handle_redirect(response, e.destination, e.code)
+                status, content = self._handle_redirect(response, e)
             elif type(e) is HTTPError:
-                status, content = self._handle_error(request, response, e.code, e)
+                status, content = self._handle_error(request, response, e)
             else:
-                status, content = self._handle_error(request, response, 500, e)
+                err = HTTPError(message=str(e))
+                status, content = self._handle_error(request, response, err)
 
         start_response(status, headers)
         return content
 
-    def _handle_error(self, request, response, code, error):
-        status = '{0} {1}'.format(code, httplib.responses[code])
-        callback = self._errors.get(code)
+    def _handle_error(self, request, response, e):
+        status = '{0} {1}'.format(e.code, httplib.responses[e.code])
+        callback = self._errors.get(e.code)
         try:
-            return status, callback(request, response, error)
+            return status, callback(request, response, e.message)
         except Exception:
             return status, status
 
-    def _handle_redirect(self, response, destination, code):
-        status = '{0} {1}'.format(code, httplib.responses[code])
-        response['Location'] = destination
+    def _handle_redirect(self, response, e):
+        status = '{0} {1}'.format(e.code, httplib.responses[e.code])
+        response['Location'] = e.destination
         return status, ''
 
     def route(self, path, method='GET'):
