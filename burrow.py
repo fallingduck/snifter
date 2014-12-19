@@ -8,8 +8,13 @@ import collections
 import re
 import httplib
 
+from SocketServer import ThreadingMixIn
+from wsgiref.simple_server import WSGIServer, make_server
+class ThreadingWSGIServer(WSGIServer, ThreadingMixIn):
+    pass
 
-Route = collections.namedtuple('Route', ('route', 'method', 'callback'))
+
+Route = collections.namedtuple('Route', ('path', 'method', 'callback'))
 
 
 class HTTPError(Exception):
@@ -40,6 +45,7 @@ class App(object):
                 match = re.match(route, request['PATH_INFO'])
                 if match is not None:
                     content = callback(request, response, **match.groupdict())
+                    break
             else:
                 raise HTTPError(404)
 
@@ -47,18 +53,18 @@ class App(object):
             if type(e) is Redirect:
                 status, content = self._handle_redirect(response, e.destination, e.code)
             elif type(e) is HTTPError:
-                status, content = self._handle_error(response, e.code, e)
+                status, content = self._handle_error(request, response, e.code, e)
             else:
-                status, content = self._handle_error(response, 500, e)
+                status, content = self._handle_error(request, response, 500, e)
 
         start_response(status, headers)
         return content
 
-    def _handle_error(self, response, code, error):
+    def _handle_error(self, request, response, code, error):
         status = '{0} {1}'.format(code, httplib.responses[code])
         callback = self._errors.get(code)
         try:
-            return status, callback(error)
+            return status, callback(request, response, error)
         except Exception:
             return status, status
 
@@ -66,3 +72,22 @@ class App(object):
         status = '{0} {1}'.format(code, httplib.responses[code])
         response['Location'] = destination
         return status, ''
+
+    def route(self, path, method='GET'):
+        path = '^{0}$'.format(path)
+        def wrapper(func):
+            self._routes.append(Route(path, method, func))
+            return func
+        return wrapper
+
+    def error(self, code):
+        def wrapper(func):
+            self._errors[code] = func
+            return func
+        return wrapper
+
+    def run(self, host='localhost', port=3030, server=ThreadingWSGIServer):
+        port = int(port)
+        server = make_server(host, port, self, server)
+        print 'Serving on http://{0}:{1}...'.format(host, port)
+        server.serve_forever()
