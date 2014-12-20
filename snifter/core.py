@@ -10,7 +10,7 @@ import cgi
 
 if py3:
     import http.client as httplib
-    import http.cookie as Cookie
+    import http.cookies as Cookie
 else:
     import httplib
     import Cookie
