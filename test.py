@@ -47,6 +47,25 @@ def readme(static_file):
     return static_file('README.md', '.', 'text/x-markdown')
 
 
+@app.route('/sessstart', wants='session')
+def sessstart(session):
+    session['in'] = True
+    return '<a href="/sessnext">Go to secret page</a>'
+
+
+@app.route('/sessnext', wants='session')
+def sessnext(session):
+    if not session.get('in'):
+        raise snifter.Redirect('/sessstart')
+    return '<a href="/sessend">End session</a>'
+
+
+@app.route('/sessend', wants='session')
+def sessend(session):
+    session.destroy()
+    raise snifter.Redirect('/sessnext')
+
+
 @app.error(404)
 def error(error):
     return 'Ouch!'

@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import sys
+assert sys.version_info > (2,5), 'Snifter requires Python 2.6 or greater to run properly'
 py3 = sys.version_info >= (3,0)
 
 import wsgiref.headers
@@ -11,6 +12,7 @@ import mimetypes
 import os
 import time
 import functools
+import traceback
 
 if py3:
     import http.client as httplib
@@ -22,6 +24,7 @@ else:
 from .server import ThreadingWSGIServer, make_server
 from .error import HTTPError, Redirect
 from .utils import parse_return, parse_date, parse_range_header, file_iter_range
+from .session import start
 
 
 Route = collections.namedtuple('Route', ('path', 'method', 'callback'))
@@ -70,6 +73,7 @@ class Response(wsgiref.headers.Headers):
             self.cookies[name]['httponly'] = httponly
         if version:
             self.cookies[name]['version'] = version
+        return self.cookies[name]
 
     def prepare(self):
         for morsel in self.cookies.values():
@@ -104,7 +108,7 @@ class App(object):
             elif type(e) is HTTPError:
                 content = self._handle_error(request, response, e)
             else:
-                print(e)
+                print(traceback.format_exc(e))
                 err = HTTPError(message=str(e))
                 content = self._handle_error(request, response, err)
 
@@ -121,6 +125,8 @@ class App(object):
                 wants.append(request)
             elif i == 'static_file' or i == 'staticfile':
                 wants.append(functools.partial(static_file, request, response))
+            elif i == 'session':
+                wants.append(start(request, response))
         wants.extend(args)
         return callback(*wants)
 
@@ -135,7 +141,7 @@ class App(object):
             if type(e) is Redirect:
                 return self._handle_redirect(response, e)
             else:
-                print(e)
+                print(traceback.format_exc(e))
                 return response.status
 
     def _handle_redirect(self, response, e):
