@@ -128,7 +128,9 @@ class App(object):
         response.set_status(e.code)
         callback = self._errors.get(e.code)
         try:
-            return self._handle_callback(callback, request, response, e.message)
+            if callback is not None:
+                return self._handle_callback(callback, request, response, e.message)
+            raise HTTPError(404, 'There was a 404 while accessing the error page.')
         except Exception as e:
             if type(e) is Redirect:
                 return self._handle_redirect(response, e)
