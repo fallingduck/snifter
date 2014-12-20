@@ -10,8 +10,10 @@ import cgi
 
 if py3:
     import http.client as httplib
+    import http.cookie as Cookie
 else:
     import httplib
+    import Cookie
 
 from .server import ThreadingWSGIServer, make_server
 from .error import HTTPError, Redirect
@@ -40,10 +42,51 @@ else:
 Route = collections.namedtuple('Route', ('path', 'method', 'callback'))
 
 
-class Request(wsgiref.headers.Headers):
-    def __init__(self, request, headers):
-        wsgiref.headers.Headers.__init__(self, headers)
+class Request(dict):
+
+    def __init__(self, request):
+        dict.__init__(self, request)
         self.forms = cgi.FieldStorage(fp=request['wsgi.input'], environ=request)
+        self.cookies = Cookie.SimpleCookie(request.get('HTTP_COOKIE', {}))
+
+    def get_cookie(self, name):
+        try:
+            return self.cookies[name].value
+        except KeyError:
+            pass
+
+
+class Response(wsgiref.headers.Headers):
+
+    def __init__(self, headers, request):
+        wsgiref.headers.Headers.__init__(self, headers)
+        self.cookies = Cookie.SimpleCookie()
+        self._request = request
+
+    def set_cookie(self, name, value, max_age=None, expires=None, path='/', comment=None, domain=None, secure=False,
+                   httponly=False, version=1):
+        self.cookies[name] = value
+        if max_age:
+            self.cookies[name]['max-age'] = max_age
+        if expires:
+            self.cookies[name]['expires'] = expires
+        if path:
+            self.cookies[name]['path'] = path
+        if comment:
+            self.cookies[name]['comment'] = comment
+        if domain:
+            self.cookies[name]['domain'] = domain
+        if secure:
+            self.cookies[name]['secure'] = secure
+        if httponly:
+            self.cookies[name]['httponly'] = httponly
+        if version:
+            self.cookies[name]['version'] = version
+
+    def prepare(self):
+        for morsel in self.cookies.values():
+            header = morsel.output().split(': ')
+            self.add_header(*header)
 
 
 class App(object):
@@ -54,7 +97,8 @@ class App(object):
 
     def __call__(self, request, start_response):
         headers = [('Content-type', 'text/html')]
-        response = Request(request, headers)
+        request = Request(request)
+        response = Response(headers, request)
         status = '200 OK'
         try:
             for route, method, callback in self._routes:
@@ -77,6 +121,7 @@ class App(object):
                 err = HTTPError(message=str(e))
                 status, content = self._handle_error(request, response, err)
 
+        response.prepare()
         start_response(status, headers)
         return _parse_return(content)
 

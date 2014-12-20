@@ -33,6 +33,15 @@ def generator():
     yield 'c'
 
 
+@app.route('/cookietest', wants=('request', 'response'))
+def cookietest(request, response):
+    if request.get_cookie('hello'):
+        return request.get_cookie('hello')
+    else:
+        response.set_cookie('hello', 'world')
+        return 'Please reload!'
+
+
 @app.error(404)
 def error(error):
     return 'Ouch!'
