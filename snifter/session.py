@@ -26,7 +26,7 @@ class Session(dict):
 
 def pysessid(ip, randval=None):
     randval = os.urandom(16) if randval is None else randval
-    hashed = hashlib.sha512('{0}{1}'.format(randval, ip)).hexdigest()[:40]
+    hashed = hashlib.sha512('{0}{1}'.format(randval, ip).encode('utf-8')).hexdigest()[:40]
     return hashed, randval
 
 

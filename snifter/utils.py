@@ -9,21 +9,21 @@ import time
 if py3:
     def parse_return(content):
         if isinstance(content, str):
-            content = content.encode('utf-8')
+            content = content.encode('utf-8', 'xmlcharrefreplace')
         if isinstance(content, bytes):
             return (content,)
         elif isinstance(content, collections.Iterable):
-            return (i.encode('utf-8') for i in content)
+            return (i.encode('utf-8', 'xmlcharrefreplace') for i in content)
         else:
             return ''
 else:
     def parse_return(content):
         if isinstance(content, unicode):
-            content = content.encode('utf-8')
+            content = content.encode('utf-8', 'xmlcharrefreplace')
         if isinstance(content, str):
             return (content,)
         elif isinstance(content, collections.Iterable):
-            return (i.encode('utf-8') for i in content)
+            return (i.encode('utf-8', 'xmlcharrefreplace') for i in content)
         else:
             return ''
 
