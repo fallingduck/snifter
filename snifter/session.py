@@ -1,8 +1,12 @@
+import sys
+py3 = sys.version_info >= (3,0)
+
 import os
 import hashlib
 import collections
 import time
 import datetime
+import threading
 
 
 SESSION_MAX_AGE = 900
@@ -25,8 +29,9 @@ class Session(dict):
 
 
 def pysessid(ip, randval=None):
-    randval = os.urandom(16) if randval is None else randval
-    hashed = hashlib.sha512('{0}{1}'.format(randval, ip).encode('utf-8')).hexdigest()[:40]
+    randval = os.urandom(16) if randval is None else bytes(randval)
+    ip = ip.encode('utf-8')
+    hashed = hashlib.sha512(randval + ip).hexdigest()[:40]
     return hashed, randval
 
 
@@ -47,3 +52,18 @@ def start(request, response):
         https = HTTPS if HTTPS else None
         response.set_cookie('PYSESSID', sessid, expires=cexpires, secure=https, httponly=True)
     return sessinfo[2]
+
+
+class GC(threading.Thread):
+
+    def run(self):
+        self.running = threading.Event()
+        while True:
+            if self.running.wait(SESSION_MAX_AGE):
+                break
+            for randval, expires, data in (_sessions.values() if py3 else _sessions.itervalues()):
+                if expires < int(time.time()):
+                    data.destroy()
+
+    def stop(self):
+        self.running.set()

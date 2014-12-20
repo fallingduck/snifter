@@ -21,7 +21,7 @@ else:
 from .server import ThreadingWSGIServer, make_server
 from .error import HTTPError, Redirect
 from .utils import parse_return
-from .session import start
+from .session import start, GC
 from .static import static_file
 
 
@@ -84,6 +84,7 @@ class App(object):
     def __init__(self):
         self._routes = []
         self._errors = {}
+        self._usessessions = False
 
     def __call__(self, request, start_response):
         headers = [('Content-type', 'text/html')]
@@ -124,6 +125,7 @@ class App(object):
             elif i == 'static_file' or i == 'staticfile':
                 wants.append(functools.partial(static_file, request, response))
             elif i == 'session':
+                self._usessessions = True
                 wants.append(start(request, response))
         wants.extend(args)
         return callback(*wants)
@@ -182,4 +184,9 @@ class App(object):
         port = int(port)
         server = make_server(host, port, self, server)
         print('Serving on http://{0}:{1}...'.format(host, port))
-        server.serve_forever()
+        session_gc = GC()
+        try:
+            session_gc.start()
+            server.serve_forever()
+        finally:
+            session_gc.stop()

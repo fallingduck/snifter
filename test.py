@@ -1,4 +1,8 @@
 import snifter
+import snifter.session
+
+
+snifter.session.SESSION_MAX_AGE = 10
 
 
 app = snifter.App()
