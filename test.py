@@ -42,7 +42,7 @@ def cookietest(request, response):
         return 'Please reload!'
 
 
-@app.route('/readme', wants='static_file')
+@app.route('/readme', wants='staticfile')
 def readme(static_file):
     return static_file('README.md', '.', 'text/x-markdown')
 

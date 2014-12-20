@@ -119,7 +119,7 @@ class App(object):
                 wants.append(response)
             elif i == 'request':
                 wants.append(request)
-            elif i == 'static_file':
+            elif i == 'static_file' or i == 'staticfile':
                 wants.append(functools.partial(static_file, request, response))
         wants.extend(args)
         return callback(*wants)
@@ -130,8 +130,11 @@ class App(object):
         try:
             return self._handle_callback(callback, request, response, e.message)
         except Exception as e:
-            print(e)
-            return response.status
+            if type(e) is Redirect:
+                return self._handle_redirect(response, e)
+            else:
+                print(e)
+                return response.status
 
     def _handle_redirect(self, response, e):
         response.set_status(e.code)
