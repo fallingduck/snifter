@@ -1,7 +1,7 @@
-import burrow
+import snifter
 
 
-app = burrow.App()
+app = snifter.App()
 
 
 @app.route('/')
@@ -11,12 +11,12 @@ def home():
 
 @app.route('/redirect')
 def redirect():
-    raise burrow.Redirect('/redirected')
+    raise snifter.Redirect('/redirected')
 
 
 @app.route('/redirected')
 def yep():
-    raise burrow.HTTPError(405, 'Yay?')
+    raise snifter.HTTPError(405, 'Yay?')
 
 
 @app.route('/whoami', wants=('response', 'request'))

@@ -1,8 +1,17 @@
-Yet another Python web microframework. This one boasts simplicity, minimalism, transparency, and integration with the latest HTML5 stuff, such as web sockets. Also, sessions, because who doesn't like sessions?
+# Snifter
 
-A little to-do list for myself:
+This minimalist web microframework has server-side sessions and websockets right out of the box. What has *your* framework done lately?
 
-- Cookies (request, response)
-- Static files (304, etc)
-- Websockets
-- Sessions
+```
+import snifter
+
+app = snifter.App()
+
+@app.route('/')
+def hello():
+    return 'Hello, world!'
+
+app.run()
+```
+
+Check out [docs/](docs/) for documentation (WIP).
