@@ -14,6 +14,8 @@ if py3:
             return (content,)
         elif isinstance(content, collections.Iterable):
             return (i.encode('utf-8') for i in content)
+        else:
+            return ''
 else:
     def parse_return(content):
         if isinstance(content, unicode):
@@ -22,6 +24,8 @@ else:
             return (content,)
         elif isinstance(content, collections.Iterable):
             return (i.encode('utf-8') for i in content)
+        else:
+            return ''
 
 
 def parse_date(ims):
