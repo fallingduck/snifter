@@ -1,7 +1,7 @@
 import sys
 py3 = sys.version_info >= (3,0)
 
-import email
+import email.utils
 import collections
 import time
 
@@ -51,11 +51,11 @@ def parse_range_header(header, maxlen=0):
             pass
 
 
-def file_iter_range(fp, offset, bytes, maxread=1024*1024):
+def file_iter_range(fp, offset, bytes_, maxread=1024*1024):
     """Adapted from Bottle"""
     fp.seek(offset)
-    while bytes > 0:
-        part = fp.read(min(bytes, maxread))
+    while bytes_ > 0:
+        part = fp.read(min(bytes_, maxread))
         if not part: break
-        bytes -= len(part)
+        bytes_ -= len(part)
         yield part
