@@ -1,8 +1,7 @@
-A little to-do list for myself:
+Documentation will be given with snippets of code that demonstrate each feature of Snifter. Because Snifter is such a lightweight framework, the documentation can be both small and thorough.
 
-- Static files (304, etc)
-- Sessions
-- Websockets
-- Better default server
+Also, documentation is given in HTML form as well, you can serve it using Snifter:
 
-Suggestions are welcome, but I'm trying to keep this framework limited.
+`$ python docs.py`
+
+And browse to `http://localhost:3030`!
