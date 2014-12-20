@@ -4,7 +4,7 @@ import snifter
 app = snifter.App()
 
 
-@app.route('/')
+@app.get('/')
 def home():
     return 'Hello, world!'
 
@@ -19,8 +19,8 @@ def yep():
     raise snifter.HTTPError(405, 'Yay?')
 
 
-@app.route('/whoami', wants=('response', 'request'))
-@app.route('/whoami/', wants=('response', 'request'))
+@app.get('/whoami', wants=('response', 'request'))
+@app.get('/whoami/', wants=('response', 'request'))
 def whoami(response, request):
     response['Content-type'] = 'text/plain'
     return request['REMOTE_ADDR']

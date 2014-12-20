@@ -160,6 +160,12 @@ class App(object):
                 return self2._func(*args)
         return Wrapper
 
+    def get(self, path, wants=()):
+        return self.route(path, method='GET', wants=wants)
+
+    def post(self, path, wants=()):
+        return self.route(path, method='POST', wants=wants)
+
     def error(self, code, wants=()):
         class Wrapper(object):
             def __init__(self2, func):
