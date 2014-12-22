@@ -20,7 +20,7 @@ def redirect():
 
 @app.route('/redirected')
 def yep():
-    raise snifter.HTTPError(405, 'Yay?')
+    raise snifter.HTTPResponse(405, 'Yay?')
 
 
 @app.get('/whoami', wants=('response', 'request'))

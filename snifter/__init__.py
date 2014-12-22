@@ -4,4 +4,4 @@ __version__ = (0,0,1)
 
 
 from .core import App
-from .error import HTTPError, Redirect
+from .error import HTTPResponse, Redirect

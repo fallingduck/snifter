@@ -1,7 +1,7 @@
 import mimetypes
 import os
 import time
-from .error import HTTPError
+from .error import HTTPResponse
 from .utils import parse_date, parse_range_header, file_iter_range
 
 
@@ -11,11 +11,11 @@ def static_file(request, response, filename, root, mimetype=None, download=False
     filename = os.path.abspath(os.path.join(root, filename))
 
     if not filename.startswith(root):
-        raise HTTPError(403, "Access denied.")
+        raise HTTPResponse(403, "Access denied.")
     if not os.path.exists(filename) or not os.path.isfile(filename):
-        raise HTTPError(404, "File does not exist.")
+        raise HTTPResponse(404, "File does not exist.")
     if not os.access(filename, os.R_OK):
-        raise HTTPError(403, "Access denied.")
+        raise HTTPResponse(403, "Access denied.")
 
     if mimetype is None:
         if download and download is not True:
@@ -46,14 +46,14 @@ def static_file(request, response, filename, root, mimetype=None, download=False
         ims = parse_date(ims.split(";")[0].strip())
     if ims is not None and ims >= int(stats.st_mtime):
         response['Date'] = time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime())
-        raise HTTPError(304)
+        raise HTTPResponse(304)
 
     body = open(filename, 'rb')
     response["Accept-ranges"] = "bytes"
     if 'HTTP_RANGE' in request:
         ranges = list(parse_range_header(request['HTTP_RANGE'], clen))
         if not ranges:
-            raise HTTPError(416, "Requested Range Not Satisfiable")
+            raise HTTPResponse(416, "Requested Range Not Satisfiable")
         offset, end = ranges[0]
         response["Content-range"] = 'bytes {0}-{1}/{2}'.format(offset, end-1, clen)
         response["Content-length"] = str(end-offset)

@@ -19,7 +19,7 @@ else:
     import Cookie
 
 from .server import ThreadingWSGIServer, make_server
-from .error import HTTPError, Redirect
+from .error import HTTPResponse, Redirect
 from .utils import parse_return
 from .session import start, sessiongc
 from .static import static_file
@@ -99,16 +99,16 @@ class App(object):
                     content = self._handle_callback(callback, request, response, *match.groups())
                     break
             else:
-                raise HTTPError(404)
+                raise HTTPResponse(404)
 
         except Exception as e:
             if type(e) is Redirect:
                 content = self._handle_redirect(response, e)
-            elif type(e) is HTTPError:
+            elif type(e) is HTTPResponse:
                 content = self._handle_error(request, response, e)
             else:
                 print(traceback.format_exc(e))
-                err = HTTPError(message=str(e))
+                err = HTTPResponse(500, message=str(e))
                 content = self._handle_error(request, response, err)
 
         response.prepare()
@@ -135,17 +135,21 @@ class App(object):
 
     def _handle_error(self, request, response, e):
         response.set_status(e.code)
+        if e.content is not None:
+            return e.content
         callback = self._errors.get(e.code)
         try:
             if callback is not None:
                 return self._handle_callback(callback, request, response, e.message)
-            raise HTTPError(404, 'There was a 404 while accessing the error page.')
+            raise HTTPResponse(404, message='There was a 404 while accessing the error page.')
         except Exception as e:
             if type(e) is Redirect:
                 return self._handle_redirect(response, e)
-            elif type(e) is HTTPError:
-                if e.code == 304:
+            elif type(e) is HTTPResponse:
+                if e.code == 304 or e.code == 204 or e.code == 205:
                     return ''
+                elif e.content is not None:
+                    return e.content
                 return response.status
             else:
                 print(traceback.format_exc(e))
