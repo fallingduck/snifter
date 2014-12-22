@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import sys
-assert sys.version_info > (2,5), 'Snifter requires Python 2.6 or greater to run properly'
+assert sys.version_info > (2,5), 'Snifter requires Python 2.6 or greater or Python 3.2 or greater to run properly'
 py3 = sys.version_info >= (3,0)
 
 import wsgiref.headers
@@ -21,7 +21,7 @@ else:
 from .server import ThreadingWSGIServer, make_server
 from .error import HTTPError, Redirect
 from .utils import parse_return
-from .session import start, GC
+from .session import start, sessiongc
 from .static import static_file
 
 
@@ -184,9 +184,5 @@ class App(object):
         port = int(port)
         server = make_server(host, port, self, server)
         print('Serving on http://{0}:{1}...'.format(host, port))
-        session_gc = GC()
-        try:
-            session_gc.start()
+        with sessiongc():
             server.serve_forever()
-        finally:
-            session_gc.stop()

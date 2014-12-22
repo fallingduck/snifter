@@ -7,6 +7,7 @@ import collections
 import time
 import datetime
 import threading
+import contextlib
 
 
 SESSION_MAX_AGE = 900
@@ -67,3 +68,13 @@ class GC(threading.Thread):
 
     def stop(self):
         self.running.set()
+
+
+@contextlib.contextmanager
+def sessiongc():
+    gc = GC()
+    try:
+        gc.start()
+        yield
+    finally:
+        gc.stop()
