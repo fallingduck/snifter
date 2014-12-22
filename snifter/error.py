@@ -1,5 +1,5 @@
 class HTTPResponse(Exception):
-    def __init__(self, code, content=None, message=''):
+    def __init__(self, code, message='', content=None):
         self.code = code
         self.message = message
         self.content = content

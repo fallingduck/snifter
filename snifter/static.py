@@ -1,6 +1,7 @@
 import mimetypes
 import os
 import time
+
 from .error import HTTPResponse
 from .utils import parse_date, parse_range_header, file_iter_range
 
@@ -10,11 +11,9 @@ def static_file(request, response, filename, root, mimetype=None, download=False
     root = os.path.abspath(root)
     filename = os.path.abspath(os.path.join(root, filename))
 
-    if not filename.startswith(root):
-        raise HTTPResponse(403, "Access denied.")
     if not os.path.exists(filename) or not os.path.isfile(filename):
         raise HTTPResponse(404, "File does not exist.")
-    if not os.access(filename, os.R_OK):
+    if not filename.startswith(root) or not os.access(filename, os.R_OK):
         raise HTTPResponse(403, "Access denied.")
 
     if mimetype is None:
