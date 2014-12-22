@@ -8,5 +8,5 @@ setup(
     license='BSD New',
     author='Jack VanDrunen',
     author_email='jack@fallingduck.net',
-    description='A modern web microframework with integrated support for server-side sessions and websockets.'
+    description='A modern web microframework with integrated support for server-side sessions.'
 )

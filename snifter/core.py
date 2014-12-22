@@ -127,6 +127,9 @@ class App(object):
             elif i == 'session':
                 self._usessessions = True
                 wants.append(start(request, response))
+            elif i == 'sse':
+                response['Content-type'] = 'text/event-stream'
+                response['Cache-control'] = 'no-cache'
         wants.extend(args)
         return callback(*wants)
 
@@ -184,5 +187,8 @@ class App(object):
         port = int(port)
         server = make_server(host, port, self, server)
         print('Serving on http://{0}:{1}...'.format(host, port))
-        with sessiongc():
+        if self._usessessions:
+            with sessiongc():
+                server.serve_forever()
+        else:
             server.serve_forever()
