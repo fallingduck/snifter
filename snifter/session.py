@@ -13,6 +13,7 @@ import contextlib
 SESSION_MAX_AGE = 900
 COOKIE_MAX_AGE = 0
 HTTPS = False
+AUTOCLEAN = False
 
 
 _sessions = {}
@@ -52,6 +53,10 @@ def start(request, response):
             cexpires = None
         https = HTTPS if HTTPS else None
         response.set_cookie('PYSESSID', sessid, expires=cexpires, secure=https, httponly=True)
+    if AUTOCLEAN:
+        for randval, expires, data in (_sessions.values() if py3 else _sessions.itervalues()):
+            if expires < int(time.time()):
+                data.destroy()
     return sessinfo[2]
 
 

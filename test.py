@@ -1,3 +1,9 @@
+try:
+    from gevent import monkey
+    monkey.patch_all()
+except ImportError:
+    pass
+
 import snifter
 import snifter.session
 
