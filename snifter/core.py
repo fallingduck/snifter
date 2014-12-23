@@ -7,7 +7,6 @@ py3 = sys.version_info >= (3,0)
 import wsgiref.headers
 import collections
 import re
-import cgi
 import functools
 import traceback
 
@@ -20,7 +19,7 @@ else:
 
 from .server import ThreadingWSGIServer, make_server
 from .error import HTTPResponse, Redirect
-from .utils import parse_return
+from .utils import parse_return, FieldStorage
 from .session import start, sessiongc
 from .static import static_file
 
@@ -32,7 +31,7 @@ class Request(dict):
 
     def __init__(self, request):
         dict.__init__(self, request)
-        self.forms = cgi.FieldStorage(fp=request['wsgi.input'], environ=request)
+        self.forms = FieldStorage(fp=request['wsgi.input'], environ=request)
         self.cookies = Cookie.SimpleCookie(request.get('HTTP_COOKIE', {}))
 
     def get_cookie(self, name):
@@ -94,7 +93,7 @@ class App(object):
             for route, method, callback in self._routes:
                 if request['REQUEST_METHOD'] != method:
                     continue
-                match = re.match(route, request['PATH_INFO'])
+                match = route.match(request['PATH_INFO'])
                 if match is not None:
                     content = self._handle_callback(callback, request, response, *match.groups())
                     break
@@ -164,7 +163,7 @@ class App(object):
         path = '^{0}$'.format(path)
         class Wrapper(object):
             def __init__(self2, func):
-                self._routes.append(Route(path, method, self2))
+                self._routes.append(Route(re.compile(path), method, self2))
                 self2.wants = wants if isinstance(wants, tuple) else (wants,)
                 self2._func = func
             def __call__(self2, *args):

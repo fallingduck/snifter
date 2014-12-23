@@ -70,6 +70,11 @@ def sessend(session):
     raise snifter.Redirect('/sessnext')
 
 
+@app.route('/get', wants='request')
+def readURI(request):
+    return request.forms.get('q')
+
+
 @app.error(404)
 def error(error):
     return 'Ouch!'

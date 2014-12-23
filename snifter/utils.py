@@ -4,6 +4,7 @@ py3 = sys.version_info >= (3,0)
 import email.utils
 import collections
 import time
+import cgi
 
 
 if py3:
@@ -63,3 +64,11 @@ def file_iter_range(fp, offset, bytes_, maxread=1024*1024):
         if not part: break
         bytes_ -= len(part)
         yield part
+
+
+class FieldStorage(cgi.FieldStorage):
+    def get(self, key):
+        try:
+            return self[key].value
+        except KeyError:
+            return None
