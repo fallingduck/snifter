@@ -95,7 +95,7 @@ class App(object):
                     continue
                 match = route.match(request['PATH_INFO'])
                 if match is not None:
-                    content = self._handle_callback(callback, request, response, *match.groups())
+                    content = self._handle_callback(callback, request, response, *match.groups(), **match.groupdict())
                     break
             else:
                 raise HTTPResponse(404)
@@ -114,7 +114,7 @@ class App(object):
         start_response(response.status, headers)
         return parse_return(content)
 
-    def _handle_callback(self, callback, request, response, *args):
+    def _handle_callback(self, callback, request, response, *args, **kwargs):
         wants = []
         for i in callback.wants:
             if i == 'response':
@@ -130,7 +130,7 @@ class App(object):
                 response['Content-type'] = 'text/event-stream'
                 response['Cache-control'] = 'no-cache'
         wants.extend(args)
-        return callback(*wants)
+        return callback(*wants, **kwargs)
 
     def _handle_error(self, request, response, e):
         response.set_status(e.code)
@@ -166,8 +166,8 @@ class App(object):
                 self._routes.append(Route(re.compile(path), method, self2))
                 self2.wants = wants if isinstance(wants, tuple) else (wants,)
                 self2._func = func
-            def __call__(self2, *args):
-                return self2._func(*args)
+            def __call__(self2, *args, **kwargs):
+                return self2._func(*args, **kwargs)
         return Wrapper
 
     def get(self, path, wants=()):
@@ -182,8 +182,8 @@ class App(object):
                 self._errors[code] = self2
                 self2.wants = wants if isinstance(wants, tuple) else (wants,)
                 self2._func = func
-            def __call__(self2, *args):
-                return self2._func(*args)
+            def __call__(self2, *args, **kwargs):
+                return self2._func(*args, **kwargs)
         return Wrapper
 
     def run(self, host='localhost', port=3030, server=ThreadingWSGIServer):
