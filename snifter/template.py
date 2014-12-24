@@ -10,7 +10,8 @@ import re
 def template(code, **kwargs):
     expre = re.compile(r'<%=\s*(.*?)\s*%>', re.DOTALL)
     blkre = re.compile(r'<%=?\s*(.*?)\s*%>', re.DOTALL)
-    for match in blkre.finditer(code):
+    match = blkre.search(code)
+    while match:
         statement = match.group(1)
         if expre.match(match.group()):
             result = eval(statement, {}, kwargs)
@@ -19,4 +20,5 @@ def template(code, **kwargs):
             result = io.StringIO() if py3 else io.BytesIO()
             exec(statement, {'print': result.write}, kwargs)
             code = '{0}{1}{2}'.format(code[:match.start()], result.getvalue(), code[match.end():])
+        match = blkre.search(code)
     return code
