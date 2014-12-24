@@ -17,7 +17,8 @@ else:
     import httplib
     import Cookie
 
-from .server import ThreadingWSGIServer, make_server
+from wsgiref.simple_server import WSGIServer, make_server
+
 from .error import HTTPResponse, Redirect
 from .utils import parse_return, FieldStorage
 from .session import start, sessiongc
@@ -199,9 +200,18 @@ class App(object):
                 return self2._func(*args, **kwargs)
         return Wrapper
 
-    def run(self, host='localhost', port=3030, server=ThreadingWSGIServer):
+    def run(self, host='localhost', port=3030, server=WSGIServer, middleware=None):
         port = int(port)
-        server = make_server(host, port, self, server)
+        app = self
+        if middleware and isinstance(middleware, collections.Iterable):
+            for mw in middleware:
+                if isinstance(mw, tuple) or isinstance(mw, list):
+                    app = mw[0](app, *mw[1:])
+                else:
+                    app = mw(app)
+        elif middleware:
+            app = middleware(app)
+        server = make_server(host, port, app, server)
         print('Serving on http://{0}:{1}...'.format(host, port))
         if self._usessessions:
             with sessiongc():
