@@ -126,9 +126,6 @@ class App(object):
             elif i == 'session':
                 self._usessessions = True
                 wants.append(start(request, response))
-            elif i == 'sse':
-                response['Content-type'] = 'text/event-stream'
-                response['Cache-control'] = 'no-cache'
         wants.extend(args)
         return callback(*wants, **kwargs)
 
@@ -159,29 +156,45 @@ class App(object):
         response['Location'] = e.destination
         return ''
 
-    def route(self, path, method='GET', wants=()):
-        path = '^{0}$'.format(path)
+    def route(self, path, method='GET', wants=(), cache=False):
+        if wants and cache:
+            raise RuntimeError, 'Cached route cannot want'
+        path = (path,) if isinstance(path, str) else path
+        path = ('^{0}$'.format(i) for i in path)
         class Wrapper(object):
             def __init__(self2, func):
-                self._routes.append(Route(re.compile(path), method, self2))
+                for p in path:
+                    self._routes.append(Route(re.compile(p), method, self2))
                 self2.wants = wants if isinstance(wants, tuple) else (wants,)
-                self2._func = func
+                if cache:
+                    value = func()
+                    self2._func = lambda: value
+                else:
+                    self2._func = func
             def __call__(self2, *args, **kwargs):
                 return self2._func(*args, **kwargs)
         return Wrapper
 
-    def get(self, path, wants=()):
-        return self.route(path, method='GET', wants=wants)
+    def get(self, path, wants=(), cache=False):
+        return self.route(path, method='GET', wants=wants, cache=cache)
 
     def post(self, path, wants=()):
         return self.route(path, method='POST', wants=wants)
 
-    def error(self, code, wants=()):
+    def error(self, code, wants=(), cache=False):
+        if wants and cache:
+            raise RuntimeError, 'Cached route cannot want'
+        code = (code,) if isinstance(code, int) else code
         class Wrapper(object):
             def __init__(self2, func):
-                self._errors[code] = self2
+                for c in code:
+                    self._errors[c] = self2
                 self2.wants = wants if isinstance(wants, tuple) else (wants,)
-                self2._func = func
+                if cache:
+                    value = func('')
+                    self2._func = lambda: value
+                else:
+                    self2._func = func
             def __call__(self2, *args, **kwargs):
                 return self2._func(*args, **kwargs)
         return Wrapper

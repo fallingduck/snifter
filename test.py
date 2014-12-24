@@ -14,7 +14,7 @@ snifter.session.SESSION_MAX_AGE = 10
 app = snifter.App()
 
 
-@app.get('/')
+@app.get('/', cache=True)
 def home():
     return 'Hello, world!'
 
@@ -25,8 +25,9 @@ def redirect():
 
 
 @app.route('/redirected')
+@snifter.view('test')
 def yep():
-    raise snifter.HTTPResponse(405, 'Yay?')
+    return {'content': 'You have been redirected!'}
 
 
 @app.get('/whoami', wants=('response', 'request'))
