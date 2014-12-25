@@ -63,12 +63,16 @@ def start(request, response):
 
 class GC(threading.Thread):
 
+    def __init__(self, sesslist=_sessions):
+        threading.Thread.__init__(self)
+        self._sessions = sesslist
+
     def run(self):
         self.running = threading.Event()
         while True:
             if self.running.wait(SESSION_MAX_AGE):
                 break
-            for randval, expires, data in (_sessions.values() if py3 else _sessions.itervalues()):
+            for randval, expires, data in (self._sessions.values() if py3 else self._sessions.itervalues()):
                 if expires < int(time.time()):
                     data.destroy()
 
