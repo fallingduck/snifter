@@ -7,7 +7,7 @@ from .session import Session, SessionInfo, pysessid
 
 class SessionMiddleware(object):
 
-    def __init__(self, application, session_max_age=900, cookie_max_age=0, https=False, autoclean=False):
+    def __init__(self, application, session_max_age=900, cookie_max_age=0, https=False, autoclean=True):
         self.SESSION_MAX_AGE = session_max_age
         self.COOKIE_MAX_AGE = cookie_max_age
         self.HTTPS = https
