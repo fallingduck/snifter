@@ -2,6 +2,8 @@
 
 This minimalist web microframework has server-side sessions and a robust templating engine right out of the box. What has *your* framework done lately?
 
+The server-side sessions are also available as WSGI middleware, so you can use them with your other less-cool frameworks too.
+
 ```python
 import snifter
 

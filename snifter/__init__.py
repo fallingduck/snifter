@@ -1,6 +1,6 @@
 __author__ = 'Jack VanDrunen'
 __license__ = 'BSD New'
-__version__ = (0,0,1)
+__version__ = (1,0,0)
 
 
 from .core import App
