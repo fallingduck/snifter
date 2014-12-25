@@ -1,10 +1,9 @@
-import sys
-py3 = sys.version_info >= (3,0)
-
 import email.utils
 import collections
 import time
 import cgi
+
+from .core import py3
 
 
 if py3:

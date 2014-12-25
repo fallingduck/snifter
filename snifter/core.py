@@ -125,8 +125,10 @@ class App(object):
             elif i == 'static_file' or i == 'staticfile':
                 wants.append(functools.partial(static_file, request, response))
             elif i == 'session':
-                self._usessessions = True
-                wants.append(start(request, response))
+                if request.get('snifter.session'):
+                    wants.append(request['snifter.session'])
+                else:
+                    wants.append(start(request, response))
         wants.extend(args)
         return callback(*wants, **kwargs)
 
@@ -167,6 +169,8 @@ class App(object):
                 for p in path:
                     self._routes.append(Route(re.compile(p), method, self2))
                 self2.wants = wants if isinstance(wants, tuple) else (wants,)
+                if 'session' in self2.wants:
+                    self._usessessions = True
                 if cache:
                     value = func()
                     self2._func = lambda: value
@@ -191,6 +195,8 @@ class App(object):
                 for c in code:
                     self._errors[c] = self2
                 self2.wants = wants if isinstance(wants, tuple) else (wants,)
+                if 'session' in self2.wants:
+                    self._usessessions = True
                 if cache:
                     value = func('')
                     self2._func = lambda: value

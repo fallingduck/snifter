@@ -1,6 +1,3 @@
-import sys
-py3 = sys.version_info >= (3,0)
-
 import os
 import hashlib
 import collections
@@ -8,6 +5,8 @@ import time
 import datetime
 import threading
 import contextlib
+
+from .core import py3
 
 
 SESSION_MAX_AGE = 900
@@ -22,12 +21,13 @@ SessionInfo = collections.namedtuple('SessionInfo', ('randval', 'expires', 'data
 
 class Session(dict):
 
-    def __init__(self, sessid):
+    def __init__(self, sessid, sessdict=_sessions):
         dict.__init__(self)
         self.sessid = sessid
+        self._sessions = sessdict
 
     def destroy(self):
-        del _sessions[self.sessid]
+        del self._sessions[self.sessid]
 
 
 def pysessid(ip, randval=None):
@@ -40,12 +40,12 @@ def pysessid(ip, randval=None):
 def start(request, response):
     sessid = request.get_cookie('PYSESSID')
     sessinfo = _sessions.get(sessid)
+    expires = int(time.time()) + SESSION_MAX_AGE
     if sessid is None or sessinfo is None or sessinfo[1] < int(time.time()):
         if sessinfo and sessinfo[1] < int(time.time()):
             sessinfo[2].destroy()
         sessid, randval = pysessid(request['REMOTE_ADDR'])
-        expires = int(time.time()) + SESSION_MAX_AGE
-        _sessions[sessid] = sessinfo = SessionInfo(randval, expires, Session(sessid))
+        sessinfo = SessionInfo(randval, expires, Session(sessid))
         if COOKIE_MAX_AGE:
             edate = datetime.datetime.utcnow() + datetime.timedelta(seconds=COOKIE_MAX_AGE)
             cexpires = edate.strftime("%a, %d %b %Y %H:%M:%S GMT")
@@ -53,6 +53,7 @@ def start(request, response):
             cexpires = None
         https = HTTPS if HTTPS else None
         response.set_cookie('PYSESSID', sessid, expires=cexpires, secure=https, httponly=True)
+    _sessions[sessid] = SessionInfo(sessinfo[0], expires, sessinfo[2])
     if AUTOCLEAN:
         for randval, expires, data in (_sessions.values() if py3 else _sessions.itervalues()):
             if expires < int(time.time()):
@@ -77,9 +78,12 @@ class GC(threading.Thread):
 
 @contextlib.contextmanager
 def sessiongc():
-    gc = GC()
-    try:
-        gc.start()
+    if AUTOCLEAN:
         yield
-    finally:
-        gc.stop()
+    else:
+        gc = GC()
+        try:
+            gc.start()
+            yield
+        finally:
+            gc.stop()
