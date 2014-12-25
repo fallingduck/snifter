@@ -161,7 +161,7 @@ class App(object):
 
     def route(self, path, method='GET', wants=(), cache=False):
         if wants and cache:
-            raise RuntimeError, 'Cached route cannot want'
+            raise RuntimeError('Cached route cannot want')
         path = (path,) if isinstance(path, str) else path
         path = ('^{0}$'.format(i) for i in path)
         class Wrapper(object):
@@ -188,7 +188,7 @@ class App(object):
 
     def error(self, code, wants=(), cache=False):
         if wants and cache:
-            raise RuntimeError, 'Cached route cannot want'
+            raise RuntimeError('Cached route cannot want')
         code = (code,) if isinstance(code, int) else code
         class Wrapper(object):
             def __init__(self2, func):

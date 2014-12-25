@@ -44,7 +44,7 @@ def _loadtpl(template):
         if os.path.exists(source):
             break
     else:
-        raise RuntimeError, 'Template file not found'
+        raise RuntimeError('Template file not found')
     mode = 'r' if py3 else 'rb'
     with open(source, mode) as f:
         return f.read()
